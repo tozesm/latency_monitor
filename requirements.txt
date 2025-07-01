@@ -1,0 +1,8 @@
+streamlit
+pandas
+requests
+multiping
+apscheduler
+pyyaml
+plotly
+dnspython

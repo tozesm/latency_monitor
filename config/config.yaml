@@ -1,0 +1,16 @@
+settings:
+  interval: 30
+
+services:
+  - name: "Google DNS ping"
+    agent: ping
+    target: "8.8.8.8"
+
+  - name: "Google DNS"
+    agent: dns
+    target: "8.8.8.8"
+    domain: "www.google.com"
+  
+  - name: "Google"
+    agent: http
+    target: "https://www.google.com"
