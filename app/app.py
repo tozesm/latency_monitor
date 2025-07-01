@@ -30,7 +30,13 @@ def getGraphByAgentType(agent_type):
         title="Response time trends for all services"
     )
 
-st.title('Service Monitoring Dashboard')
+st.set_page_config(
+    page_title="Latency Monitor",
+    page_icon="🐢",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+st.title('Latency Monitoring Dashboard')
 st.subheader('Current Service Status')
 
 latest_checks = get_data("""
@@ -39,8 +45,6 @@ latest_checks = get_data("""
     GROUP BY service_name
     ORDER BY last_check DESC
 """)
-
-
 
 if latest_checks.empty:
     st.info("No monitoring records found.")

@@ -112,7 +112,7 @@ def run_checks():
         log_result(service, success, latency)
 
 if __name__ == "__main__":
-    logging.debug('Starting monitoring application')
+    logging.debug('Starting latency monitoring application')
     init_db()
 
     config = load_config(CONFIG_PATH)

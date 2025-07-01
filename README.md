@@ -1,28 +1,28 @@
-# simple_intranet_latency
+# Latency Monitor
 A very simple way to monitor latency with ICMP, HTTP and DNS probes.
 
 Built with Python, SQLite and StreamLit
 
 ### build
 
-    docker build . -t intranet_latency
+    docker build . -t latency_monitor
 
 ### Run locally
-    docker run -d -v ./data:/data -v ./config:/config --name intranet_latency --network host intranet_latency
+    docker run -d --network host -v ./data:/data -v ./config:/config --name latency_monitor latency_monitor
 
 ### Docker Compose
 ```
 services:  
-  intranet_latency:
-    image: intranet_latency
-    container_name: intranet_latency
+  latency_monitor:
+    image: latency_monitor
+    container_name: latency_monitor
     environment:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - ./data_intranet_latency/config:/config
-      - ./data_intranet_latency/data:/data
+      - ./data_latency_monitor/config:/config
+      - ./data_latency_monitor/data:/data
     network_mode: "host"
     restart: unless-stopped
 ```
