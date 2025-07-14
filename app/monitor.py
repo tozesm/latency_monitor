@@ -12,15 +12,13 @@ import dns.resolver
 DB_PATH = 'data/monitoring.db'
 CONFIG_PATH = 'config/config.yaml'
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-
 # Thread-safe SQLite connection using connection per thread
 def get_db_connection():
     return sqlite3.connect(DB_PATH, check_same_thread=False)
 
 # Initialize database schema
 def init_db():
-    logging.debug('Initializing database schema')
+    logging.info('Initializing database schema')
     conn = get_db_connection()
     cursor = conn.cursor()
     cursor.execute('''
@@ -38,7 +36,7 @@ def init_db():
     conn.close()
 
 def load_config(file_path):
-    logging.debug(f'Loading configuration from {file_path}')
+    logging.info(f'Loading configuration from {file_path}')
     with open(file_path, 'r') as f:
         return yaml.safe_load(f)
     
@@ -53,7 +51,7 @@ def ping_check(ip):
         logging.debug(f'Ping check result for {ip}: success={success}, latency={latency}')
         return success, latency
     except Exception as e:
-        logging.debug(f'Ping check failed for {ip}: {e}')
+        logging.error(f'Ping check failed for {ip}: {e}')
         return False, None
 
 def http_check(url):
@@ -65,7 +63,7 @@ def http_check(url):
         logging.debug(f'HTTP check result for {url}: success={success}, latency={latency}')
         return success, latency
     except requests.exceptions.RequestException as e:
-        logging.debug(f'HTTP check failed for {url}: {e}')
+        logging.error(f'HTTP check failed for {url}: {e}')
         return False, None
 
 def dns_check(dns_server, domain):
@@ -81,7 +79,7 @@ def dns_check(dns_server, domain):
         logging.debug(f'DNS check result for {domain}: success={success}, latency={latency}, ips={ips}')
         return success, latency
     except Exception as e:
-        logging.debug(f'DNS check failed for {domain}: {e}')
+        logging.error(f'DNS check failed for {domain}: {e}')
         return False, None
     
 def log_result(service, success, response_time):
@@ -107,17 +105,21 @@ def run_checks():
         elif service['agent'] == 'dns':
             success, latency = dns_check(service['target'],service['domain'])
         else:
-            logging.debug(f'Unknown agent type {service["agent"]} for service {service["name"]}')
+            logging.error(f'Unknown agent type {service["agent"]} for service {service["name"]}')
             continue
         log_result(service, success, latency)
 
 if __name__ == "__main__":
-    logging.debug('Starting latency monitoring application')
-    init_db()
-
     config = load_config(CONFIG_PATH)
     interval = config["settings"]["interval"]
+    logLevel = config["settings"]["logLevel"]
+
+    logging.basicConfig(level=logLevel.upper(), format='%(asctime)s - %(levelname)s - %(message)s')
     
+    logging.info('Starting latency monitoring application')
+
+    init_db()
+
     scheduler = BackgroundScheduler()
     scheduler.add_job(run_checks, 'interval', seconds=interval)  # Base interval
     scheduler.start()

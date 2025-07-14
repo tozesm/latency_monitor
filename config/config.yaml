@@ -1,5 +1,6 @@
 settings:
   interval: 30
+  logLebel: "INFO"
 
 services:
   - name: "Google DNS ping"
