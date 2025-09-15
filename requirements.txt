@@ -6,3 +6,4 @@ apscheduler
 pyyaml
 plotly
 dnspython
+iperf3

@@ -7,10 +7,11 @@ import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 import logging
 import dns.resolver
+import iperf3
+import sys
 
-
-DB_PATH = 'data/monitoring.db'
-CONFIG_PATH = 'config/config.yaml'
+DB_PATH = '/data/monitoring.db'
+CONFIG_PATH = '/config/config.yaml'
 
 # Thread-safe SQLite connection using connection per thread
 def get_db_connection():
@@ -39,7 +40,27 @@ def load_config(file_path):
     logging.info(f'Loading configuration from {file_path}')
     with open(file_path, 'r') as f:
         return yaml.safe_load(f)
-    
+
+def iperf3_check(server_ip, port=5201, duration=5, reverse=False):
+    client = iperf3.Client()
+    client.server_hostname = server_ip
+    client.port = port
+    client.duration = duration
+    client.reverse = reverse  # If True, server sends data to client
+    client.verbose = False
+
+    logging.debug(f'Running iperf3 test against {server_ip}:{port} for {duration}s')
+    result = client.run()
+
+    if result.error:
+        logging.error(f'iperf3 test failed: {result.error}')
+        return False, None
+
+    # result.sent_Mbps and result.received_Mbps give bandwidth estimates
+    bandwidth_mbps = result.received_Mbps if reverse else result.sent_Mbps
+    logging.debug(f'iperf3 test success, bandwidth: {bandwidth_mbps} Mbps')
+    return True, bandwidth_mbps
+
 def ping_check(ip):
     logging.debug(f'Performing ping check on {ip}')
     try:
@@ -104,6 +125,8 @@ def run_checks():
             success, latency = http_check(service['target'])
         elif service['agent'] == 'dns':
             success, latency = dns_check(service['target'],service['domain'])
+        elif service['agent'] == 'iperf3':
+            success, latency = iperf3_check(service['target'])
         else:
             logging.error(f'Unknown agent type {service["agent"]} for service {service["name"]}')
             continue
@@ -111,10 +134,11 @@ def run_checks():
 
 if __name__ == "__main__":
     config = load_config(CONFIG_PATH)
+    print(config)
     interval = config["settings"]["interval"]
     logLevel = config["settings"]["logLevel"]
 
-    logging.basicConfig(level=logLevel.upper(), format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(level=logLevel.upper(), format='%(asctime)s - %(levelname)s - %(message)s', handlers=[logging.StreamHandler(sys.stdout)])
     
     logging.info('Starting latency monitoring application')
 
